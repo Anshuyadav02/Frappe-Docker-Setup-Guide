@@ -1,0 +1,791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Docker + Frappe Site Setup on Ubuntu</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0e1d26;
+    --ink-soft:#456070;
+    --ink-faint:#7b93a1;
+    --paper:#eef3f6;
+    --card:#ffffff;
+    --line:#d9e3ea;
+    --blue:#0b6fa4;
+    --blue-deep:#06527a;
+    --blue-wash:#e6f2f9;
+    --teal:#0e8c86;
+    --teal-wash:#e3f5f3;
+    --amber:#9a5b00;
+    --amber-wash:#fdf1de;
+    --term:#0c1f2b;
+    --term-line:#1d3a4a;
+    --radius:10px;
+  }
+
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth; scroll-padding-top:24px}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- shell ---------- */
+  .shell{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 24px 80px;
+    display:grid;
+    grid-template-columns:230px minmax(0,1fr);
+    gap:48px;
+    align-items:start;
+  }
+
+  /* ---------- hero ---------- */
+  .hero{
+    background:var(--term);
+    color:#dbe9f1;
+    padding:56px 24px 64px;
+    margin-bottom:40px;
+    border-bottom:3px solid var(--blue);
+  }
+  .hero-in{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:48px;align-items:center}
+  .kicker{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:13px;
+    color:#5fb3d9;
+    margin:0 0 14px;
+    letter-spacing:.02em;
+  }
+  .hero h1{
+    font-size:clamp(30px,4.6vw,46px);
+    line-height:1.12;
+    font-weight:600;
+    margin:0 0 16px;
+    letter-spacing:-.02em;
+    color:#fff;
+  }
+  .hero p{margin:0;color:#a9c4d3;font-size:17px;max-width:46ch}
+  .meta{
+    margin-top:24px;
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .chip{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    padding:5px 11px;
+    border:1px solid var(--term-line);
+    border-radius:100px;
+    color:#8fb6c9;
+  }
+
+  /* terminal preview in hero */
+  .term{
+    background:#071720;
+    border:1px solid var(--term-line);
+    border-radius:var(--radius);
+    overflow:hidden;
+    box-shadow:0 18px 40px rgba(0,0,0,.35);
+  }
+  .term-bar{
+    display:flex;gap:7px;align-items:center;
+    padding:11px 14px;
+    border-bottom:1px solid var(--term-line);
+    background:#0b2130;
+  }
+  .dot{width:11px;height:11px;border-radius:50%}
+  .term-bar span:last-child{
+    margin-left:10px;font-family:"IBM Plex Mono",monospace;
+    font-size:11px;color:#6f96a9;
+  }
+  .term-body{padding:16px 18px;font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:2}
+  .term-body div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pr{color:#4ec9a5}
+  .out{color:#6f96a9}
+
+  /* ---------- sidebar ---------- */
+  nav.side{
+    position:sticky;
+    top:24px;
+    font-size:14px;
+  }
+  nav.side h2{
+    font-size:12px;
+    font-family:"IBM Plex Mono",monospace;
+    color:var(--ink-faint);
+    margin:0 0 14px;
+    font-weight:500;
+  }
+  nav.side ol{list-style:none;margin:0;padding:0;border-left:2px solid var(--line)}
+  nav.side a{
+    display:flex;gap:10px;align-items:baseline;
+    padding:7px 0 7px 14px;
+    margin-left:-2px;
+    border-left:2px solid transparent;
+    color:var(--ink-soft);
+    text-decoration:none;
+    line-height:1.35;
+  }
+  nav.side a .n{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12px;
+    color:var(--ink-faint);
+    min-width:14px;
+  }
+  nav.side a:hover{color:var(--blue)}
+  nav.side a.on{color:var(--blue-deep);font-weight:600;border-left-color:var(--blue)}
+  nav.side a.on .n{color:var(--blue)}
+
+  /* ---------- content ---------- */
+  main{min-width:0}
+  section{
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:30px 34px 34px;
+    margin-bottom:22px;
+  }
+  section > h2{
+    margin:0 0 6px;
+    font-size:23px;
+    font-weight:600;
+    letter-spacing:-.01em;
+    display:flex;
+    align-items:center;
+    gap:13px;
+  }
+  .step-no{
+    flex:none;
+    width:30px;height:30px;
+    display:grid;place-items:center;
+    background:var(--blue);
+    color:#fff;
+    border-radius:8px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:14px;
+    font-weight:600;
+  }
+  .lede{color:var(--ink-soft);margin:0 0 20px 43px;max-width:66ch}
+  section > h3{
+    font-size:15px;
+    margin:26px 0 10px;
+    font-weight:600;
+    color:var(--blue-deep);
+  }
+
+  /* ---------- code ---------- */
+  .cmd{
+    position:relative;
+    background:var(--term);
+    border-radius:8px;
+    margin:12px 0;
+    display:flex;
+    align-items:flex-start;
+  }
+  .cmd pre{
+    margin:0;
+    padding:14px 60px 14px 16px;
+    overflow-x:auto;
+    flex:1;
+    min-width:0;
+  }
+  .cmd code{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:13.5px;
+    color:#e4f0f6;
+    line-height:1.75;
+    white-space:pre;
+  }
+  .cmd code .pr{color:#4ec9a5;user-select:none}
+  .cmd code .cm{color:#6f96a9}
+  .copy{
+    position:absolute;
+    top:9px;right:9px;
+    background:#173341;
+    color:#9dc2d4;
+    border:1px solid var(--term-line);
+    border-radius:6px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:11px;
+    padding:4px 9px;
+    cursor:pointer;
+  }
+  .copy:hover{background:#204457;color:#fff}
+  .copy.done{background:#134f3f;color:#79e0bd;border-color:#1c6d57}
+  .copy:focus-visible{outline:2px solid #5fb3d9;outline-offset:2px}
+
+  /* ---------- callouts ---------- */
+  .note,.warn,.ok{
+    border-radius:8px;
+    padding:14px 16px 14px 44px;
+    margin:16px 0;
+    font-size:14.5px;
+    position:relative;
+    line-height:1.6;
+  }
+  .note p,.warn p,.ok p{margin:0 0 8px}
+  .note p:last-child,.warn p:last-child,.ok p:last-child{margin:0}
+  .note::before,.warn::before,.ok::before{
+    position:absolute;left:15px;top:13px;font-size:15px;
+  }
+  .note{background:var(--blue-wash);color:#0c465f}
+  .note::before{content:"i";font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--blue);
+    width:18px;height:18px;border:1.5px solid var(--blue);border-radius:50%;
+    display:grid;place-items:center;font-size:11px;top:15px;left:15px}
+  .warn{background:var(--amber-wash);color:#6b3f00}
+  .warn::before{content:"!";font-family:"IBM Plex Mono",monospace;font-weight:700;color:var(--amber);
+    width:18px;height:18px;border:1.5px solid var(--amber);border-radius:50%;
+    display:grid;place-items:center;font-size:11px;top:15px;left:15px}
+  .ok{background:var(--teal-wash);color:#0a5b56}
+  .ok::before{content:"✓";color:var(--teal);font-weight:700;top:13px;left:17px}
+
+  code.inline{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.88em;
+    background:#e8eef2;
+    color:#0c465f;
+    padding:2px 6px;
+    border-radius:4px;
+  }
+  .note code.inline,.warn code.inline,.ok code.inline{background:rgba(255,255,255,.65)}
+
+  /* ---------- tables ---------- */
+  table{border-collapse:collapse;width:100%;margin:18px 0;font-size:14.5px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line)}
+  thead th{
+    font-size:12px;
+    color:var(--ink-faint);
+    font-weight:600;
+    border-bottom:2px solid var(--line);
+  }
+  tbody tr:last-child td{border-bottom:none}
+  td code{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--blue-deep)}
+  .roadmap td:first-child{
+    font-family:"IBM Plex Mono",monospace;
+    color:var(--ink-faint);
+    width:34px;
+  }
+
+  /* ---------- checklist ---------- */
+  .check{list-style:none;margin:0;padding:0}
+  .check li{
+    display:flex;gap:12px;align-items:center;
+    padding:11px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .check li:last-child{border-bottom:none}
+  .check input{
+    width:17px;height:17px;
+    accent-color:var(--teal);
+    flex:none;
+    cursor:pointer;
+  }
+  .check input:checked + span{color:var(--ink-faint);text-decoration:line-through}
+  .check label{display:flex;gap:12px;align-items:center;cursor:pointer;width:100%}
+
+  /* ---------- author ---------- */
+  .byline{
+    margin-top:26px;
+    padding-top:20px;
+    border-top:1px solid var(--term-line);
+    display:flex;
+    align-items:center;
+    gap:13px;
+  }
+  .avatar{
+    flex:none;
+    width:40px;height:40px;
+    border-radius:50%;
+    display:grid;place-items:center;
+    background:var(--blue);
+    color:#fff;
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:.02em;
+  }
+  .byline-text{line-height:1.45}
+  .byline-name{color:#fff;font-weight:600;font-size:15px}
+  .byline-role{color:#8fb6c9;font-size:13px}
+  .byline a{
+    color:#5fb3d9;
+    text-decoration:none;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:12.5px;
+  }
+  .byline a:hover{text-decoration:underline}
+
+  .author-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding-bottom:18px;
+    margin-bottom:18px;
+    border-bottom:1px solid var(--line);
+  }
+  .author-card .avatar{width:44px;height:44px;font-size:16px}
+  .author-card .n{font-weight:600;color:var(--ink);font-size:16px}
+  .author-card .r{color:var(--ink-faint);font-size:13.5px}
+  .author-card a{font-family:"IBM Plex Mono",monospace;font-size:13px}
+
+  footer{
+    margin-top:8px;
+    padding:24px 34px;
+    font-size:14px;
+    color:var(--ink-soft);
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+  footer a{color:var(--blue-deep)}
+  footer ul{margin:10px 0 0;padding-left:18px}
+  footer li{margin:4px 0}
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .hero-in{grid-template-columns:1fr;gap:32px}
+    .shell{grid-template-columns:1fr;gap:0;padding:0 16px 60px}
+    nav.side{
+      position:static;
+      margin-bottom:22px;
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px 20px;
+    }
+    nav.side ol{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+      border-left:none;
+    }
+    nav.side a{border-left:none;padding-left:0;margin-left:0}
+    nav.side a.on{border-left:none}
+    section{padding:24px 20px 26px}
+    .lede{margin-left:0}
+    .cmd pre{padding-right:16px;padding-top:38px}
+    .copy{top:7px;left:9px;right:auto}
+  }
+
+  @media print{
+    body{background:#fff}
+    .hero{background:#fff;color:#000;border-bottom:2px solid #000}
+    .hero h1,.hero p,.kicker{color:#000}
+    .byline{border-top:1px solid #999}
+    .byline-name{color:#000}
+    .byline-role{color:#444}
+    .byline a,.author-card a{color:#000}
+    .term,nav.side,.copy{display:none}
+    section{break-inside:avoid;border:1px solid #bbb}
+    .cmd{background:#f2f4f6;border:1px solid #ccc}
+    .cmd code{color:#111}
+    .cmd code .pr{color:#555}
+    .shell{grid-template-columns:1fr}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="hero-in">
+    <div>
+      <p class="kicker">Ubuntu · Docker · Frappe Bench</p>
+      <h1>Docker + Frappe Site Setup on Ubuntu</h1>
+      <p>Install Docker, clone the Frappe Docker project, set up bench, and get your own site and app running — ten steps, start to finish.</p>
+      <div class="meta">
+        <span class="chip">10 steps</span>
+        <span class="chip">~30 min</span>
+        <span class="chip">copy-paste ready</span>
+      </div>
+      <div class="byline">
+        <div class="avatar">AY</div>
+        <div class="byline-text">
+          <div class="byline-name">Anshu Yadav</div>
+          <div class="byline-role">Frappe Developer · <a href="https://github.com/Anshuyadav02" target="_blank" rel="noopener">github.com/Anshuyadav02</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="term">
+      <div class="term-bar">
+        <span class="dot" style="background:#ff5f57"></span>
+        <span class="dot" style="background:#febc2e"></span>
+        <span class="dot" style="background:#28c840"></span>
+        <span>anshu@ubuntu: ~/frappe_docker</span>
+      </div>
+      <div class="term-body">
+        <div><span class="pr">$</span> bench new-site mysite.localhost</div>
+        <div><span class="pr">$</span> bench new-app myapp</div>
+        <div><span class="pr">$</span> bench --site mysite.localhost install-app myapp</div>
+        <div class="out">Installing myapp...</div>
+        <div class="out">Site is ready.</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+
+  <nav class="side" aria-label="Steps">
+    <h2>On this page</h2>
+    <ol>
+      <li><a href="#roadmap"><span class="n">–</span><span>Roadmap</span></a></li>
+      <li><a href="#s1"><span class="n">1</span><span>Install Docker</span></a></li>
+      <li><a href="#s2"><span class="n">2</span><span>Docker Compose</span></a></li>
+      <li><a href="#s3"><span class="n">3</span><span>User permission</span></a></li>
+      <li><a href="#s4"><span class="n">4</span><span>Clone the repo</span></a></li>
+      <li><a href="#s5"><span class="n">5</span><span>Setup bench</span></a></li>
+      <li><a href="#s6"><span class="n">6</span><span>Connect containers</span></a></li>
+      <li><a href="#s7"><span class="n">7</span><span>Bench requirements</span></a></li>
+      <li><a href="#s8"><span class="n">8</span><span>Create a site</span></a></li>
+      <li><a href="#s9"><span class="n">9</span><span>Create an app</span></a></li>
+      <li><a href="#s10"><span class="n">10</span><span>Install the app</span></a></li>
+      <li><a href="#all"><span class="n">–</span><span>All commands</span></a></li>
+      <li><a href="#checklist"><span class="n">–</span><span>Checklist</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section id="roadmap">
+      <h2>Roadmap</h2>
+      <p class="lede" style="margin-left:0">What each stage gives you before you start typing.</p>
+      <table class="roadmap">
+        <thead><tr><th>#</th><th>Stage</th><th>What you get</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>Install Docker</td><td>Containers ready</td></tr>
+          <tr><td>2</td><td>Install Docker Compose</td><td>Multi-container support</td></tr>
+          <tr><td>3</td><td>Give user permission</td><td>Run Docker without <code>sudo</code></td></tr>
+          <tr><td>4</td><td>Clone frappe_docker</td><td>Project files + dev config</td></tr>
+          <tr><td>5</td><td>Setup bench</td><td>Frappe framework installed</td></tr>
+          <tr><td>6</td><td>Connect containers</td><td>DB + Redis linked</td></tr>
+          <tr><td>7</td><td>Install bench requirements</td><td>Dependencies installed</td></tr>
+          <tr><td>8</td><td>Create site</td><td>Your website is live</td></tr>
+          <tr><td>9</td><td>Create app</td><td>Your custom app</td></tr>
+          <tr><td>10</td><td>Install app</td><td>App added to site</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="s1">
+      <h2><span class="step-no">1</span>Install Docker Package</h2>
+      <p class="lede">Update your system first, then install Docker.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>sudo apt update</code></pre><button class="copy">Copy</button></div>
+      <div class="cmd"><pre><code><span class="pr">$ </span>sudo apt install docker.io</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> <code class="inline">apt update</code> refreshes the package list, and <code class="inline">docker.io</code> installs the Docker engine.</p></div>
+    </section>
+
+    <section id="s2">
+      <h2><span class="step-no">2</span>Install Docker Compose</h2>
+      <p class="lede">One command to run several containers together.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>sudo apt install docker-compose</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> Frappe needs several containers running together — Frappe, MariaDB, and Redis. Docker Compose manages all of them with a single command.</p></div>
+    </section>
+
+    <section id="s3">
+      <h2><span class="step-no">3</span>Give Your User Docker Permission</h2>
+      <p class="lede">Add your user to the <code class="inline">docker</code> group so you don't need <code class="inline">sudo</code> every time.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>sudo usermod -aG docker $USER</code></pre><button class="copy">Copy</button></div>
+
+      <p style="margin:18px 0 0;color:var(--ink-soft);font-size:14.5px">Apply the new group without logging out:</p>
+      <div class="cmd"><pre><code><span class="pr">$ </span>newgrp docker</code></pre><button class="copy">Copy</button></div>
+
+      <p style="margin:18px 0 0;color:var(--ink-soft);font-size:14.5px">Check that it works:</p>
+      <div class="cmd"><pre><code><span class="pr">$ </span>docker ps</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> By default only <code class="inline">root</code> can talk to the Docker daemon. Adding yourself to the <code class="inline">docker</code> group lets you run Docker commands as your normal user.</p></div>
+      <div class="warn"><p><strong>Don't skip this step.</strong> Without it you will hit "permission denied while trying to connect to the Docker daemon" errors later.</p>
+      <p>If <code class="inline">newgrp docker</code> does not work, log out and log back in, or restart your laptop.</p></div>
+    </section>
+
+    <section id="s4">
+      <h2><span class="step-no">4</span>Clone the Frappe Docker Repo</h2>
+      <p class="lede">Download the official project and prepare the dev config.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>git clone https://github.com/frappe/frappe_docker.git</code></pre><button class="copy">Copy</button></div>
+
+      <p style="margin:18px 0 0;color:var(--ink-soft);font-size:14.5px">Go inside the folder:</p>
+      <div class="cmd"><pre><code><span class="pr">$ </span>cd frappe_docker</code></pre><button class="copy">Copy</button></div>
+
+      <p style="margin:18px 0 0;color:var(--ink-soft);font-size:14.5px">Copy the example devcontainer config into <code class="inline">.devcontainer</code>:</p>
+      <div class="cmd"><pre><code><span class="pr">$ </span>cp -R devcontainer-example .devcontainer</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> The <code class="inline">.devcontainer</code> folder tells Docker which containers to build for development. It is a hidden folder — use <code class="inline">ls -a</code> to see it.</p></div>
+    </section>
+
+    <section id="s5">
+      <h2><span class="step-no">5</span>Setup Bench</h2>
+      <p class="lede">Initialize bench, then move into the bench folder.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench init --skip-redis-config-generation frappe-bench</code></pre><button class="copy">Copy</button></div>
+      <div class="cmd"><pre><code><span class="pr">$ </span>cd frappe-bench</code></pre><button class="copy">Copy</button></div>
+
+      <h3>Want a specific version instead?</h3>
+      <p style="margin:0 0 4px;color:var(--ink-soft);font-size:14.5px">Use the same command with a branch name:</p>
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench init --skip-redis-config-generation --frappe-branch version-14 frappe-bench</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> <code class="inline">--skip-redis-config-generation</code> is used because Redis runs in its own separate container, so bench does not need to generate its own Redis config.</p></div>
+      <div class="warn"><p>Run only <strong>one</strong> of the two <code class="inline">bench init</code> commands. Use the branch version if you need a specific release, otherwise use the first one.</p></div>
+    </section>
+
+    <section id="s6">
+      <h2><span class="step-no">6</span>Point Bench to the Right Containers</h2>
+      <p class="lede">By default bench looks for the database and Redis on <code class="inline">localhost</code>. Here they run in separate containers, so we give bench their real addresses. Run these inside the container.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench set-config -g db_host mariadb</code></pre><button class="copy">Copy</button></div>
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench set-config -g redis_cache redis://redis-cache:6379</code></pre><button class="copy">Copy</button></div>
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench set-config -g redis_queue redis://redis-queue:6379</code></pre><button class="copy">Copy</button></div>
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench set-config -g redis_socketio redis://redis-queue:6379</code></pre><button class="copy">Copy</button></div>
+
+      <table>
+        <thead><tr><th>Setting</th><th>Points to</th></tr></thead>
+        <tbody>
+          <tr><td><code>db_host</code></td><td>MariaDB container</td></tr>
+          <tr><td><code>redis_cache</code></td><td>Cache container</td></tr>
+          <tr><td><code>redis_queue</code></td><td>Background jobs container</td></tr>
+          <tr><td><code>redis_socketio</code></td><td>Real-time updates container</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note"><p><strong>What's happening:</strong> The <code class="inline">-g</code> flag means <strong>global</strong>, so this setting applies to all sites.</p></div>
+      <div class="warn"><p>Do not skip this step, otherwise you will get a database connection error while creating the site.</p></div>
+    </section>
+
+    <section id="s7">
+      <h2><span class="step-no">7</span>Install Bench Requirements</h2>
+      <p class="lede">Pull in the Python and Node dependencies that your apps need.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench setup requirements</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> This reads every app's requirement files and installs the missing Python packages and Node modules into the bench.</p></div>
+      <div class="ok"><p>Run this again any time you add a new app or pull new code, so the dependencies stay in sync.</p></div>
+    </section>
+
+    <section id="s8">
+      <h2><span class="step-no">8</span>Create a New Site</h2>
+      <p class="lede">Replace <code class="inline">site_name</code> with your own name, for example <code class="inline">mysite.localhost</code>.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench new-site site_name.localhost</code></pre><button class="copy">Copy</button></div>
+
+      <div class="ok"><p>Always end the site name with <code class="inline">.localhost</code>.</p></div>
+      <div class="warn"><p>This command asks for the MySQL root password and an Administrator password. <strong>Remember the Administrator password</strong> — you will use it to log in.</p></div>
+    </section>
+
+    <section id="s9">
+      <h2><span class="step-no">9</span>Create a New App</h2>
+      <p class="lede">Replace <code class="inline">ap_name</code> with your own app name.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench new-app ap_name</code></pre><button class="copy">Copy</button></div>
+
+      <div class="ok"><p>Use <strong>lowercase</strong> letters and <strong>underscores</strong>. <code class="inline">my_app</code> is correct; <code class="inline">My App</code> and <code class="inline">my-app</code> will fail.</p></div>
+      <div class="note"><p>It will ask for App Title, Description, Publisher and so on. Press Enter to skip any of these.</p></div>
+    </section>
+
+    <section id="s10">
+      <h2><span class="step-no">10</span>Install the App on Your Site</h2>
+      <p class="lede">Connect the app you just made to the site you just made.</p>
+
+      <div class="cmd"><pre><code><span class="pr">$ </span>bench --site site_name install-app appname</code></pre><button class="copy">Copy</button></div>
+
+      <div class="note"><p><strong>What's happening:</strong> <code class="inline">site_name</code> is the site from Step 8, and <code class="inline">appname</code> is the app from Step 9.</p></div>
+      <div class="ok"><p>Done — your Frappe site and custom app are ready.</p></div>
+    </section>
+
+    <section id="all">
+      <h2>All Commands in One Place</h2>
+      <p class="lede" style="margin-left:0">Copy the whole block if you already know the flow.</p>
+      <div class="cmd"><pre><code><span class="cm"># 1. Install Docker</span>
+sudo apt update
+sudo apt install docker.io
+
+<span class="cm"># 2. Install Docker Compose</span>
+sudo apt install docker-compose
+
+<span class="cm"># 3. Give user Docker permission</span>
+sudo usermod -aG docker $USER
+newgrp docker
+docker ps
+
+<span class="cm"># 4. Clone repo</span>
+git clone https://github.com/frappe/frappe_docker.git
+cd frappe_docker
+cp -R devcontainer-example .devcontainer
+
+<span class="cm"># 5. Setup bench</span>
+bench init --skip-redis-config-generation frappe-bench
+cd frappe-bench
+<span class="cm"># for a specific version:</span>
+<span class="cm"># bench init --skip-redis-config-generation --frappe-branch version-14 frappe-bench</span>
+
+<span class="cm"># 6. Connect containers</span>
+bench set-config -g db_host mariadb
+bench set-config -g redis_cache redis://redis-cache:6379
+bench set-config -g redis_queue redis://redis-queue:6379
+bench set-config -g redis_socketio redis://redis-queue:6379
+
+<span class="cm"># 7. Install bench requirements</span>
+bench setup requirements
+
+<span class="cm"># 8. Create site</span>
+bench new-site site_name.localhost
+
+<span class="cm"># 9. Create app</span>
+bench new-app ap_name
+
+<span class="cm"># 10. Install app</span>
+bench --site site_name install-app appname</code></pre><button class="copy">Copy</button></div>
+    </section>
+
+    <section id="checklist">
+      <h2>Quick Checklist</h2>
+      <p class="lede" style="margin-left:0">Tick these off as you go.</p>
+      <ul class="check">
+        <li><label><input type="checkbox"><span>Docker installed</span></label></li>
+        <li><label><input type="checkbox"><span>Docker Compose installed</span></label></li>
+        <li><label><input type="checkbox"><span>User added to the docker group</span></label></li>
+        <li><label><input type="checkbox"><span>Repo cloned and .devcontainer copied</span></label></li>
+        <li><label><input type="checkbox"><span>Bench initialized</span></label></li>
+        <li><label><input type="checkbox"><span>All four set-config commands run</span></label></li>
+        <li><label><input type="checkbox"><span>Bench requirements installed</span></label></li>
+        <li><label><input type="checkbox"><span>Site created</span></label></li>
+        <li><label><input type="checkbox"><span>App created</span></label></li>
+        <li><label><input type="checkbox"><span>App installed on site</span></label></li>
+      </ul>
+    </section>
+
+    <footer>
+      <div class="author-card">
+        <div class="avatar">AY</div>
+        <div>
+          <div class="n">Anshu Yadav</div>
+          <div class="r">Frappe Developer</div>
+          <a href="https://github.com/Anshuyadav02" target="_blank" rel="noopener">github.com/Anshuyadav02</a>
+        </div>
+      </div>
+      Reference links
+      <ul>
+        <li><a href="https://github.com/frappe/frappe_docker">github.com/frappe/frappe_docker</a></li>
+        <li><a href="https://docs.frappe.io/framework">docs.frappe.io/framework</a></li>
+        <li><a href="https://discuss.frappe.io">discuss.frappe.io</a></li>
+      </ul>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+// Copy on click — strips the "$ " prompt so the command pastes cleanly.
+// execCommand runs first because it works inside file:// pages and iframes
+// where the async clipboard API is blocked. Both paths are tried silently.
+function copySync(text) {
+  var ok = false;
+  var ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:fixed;top:0;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+
+  var sel = document.getSelection();
+  var saved = sel.rangeCount > 0 ? sel.getRangeAt(0) : null;
+
+  function onCopy(e) {
+    e.clipboardData.setData('text/plain', text);
+    e.preventDefault();
+    ok = true;
+  }
+  document.addEventListener('copy', onCopy);
+
+  try {
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, ta.value.length);
+    if (document.execCommand('copy')) ok = true;
+  } catch (e) { /* fall through to the async path */ }
+
+  document.removeEventListener('copy', onCopy);
+  document.body.removeChild(ta);
+  if (saved) { sel.removeAllRanges(); sel.addRange(saved); }
+  return ok;
+}
+
+function markCopied(btn) {
+  btn.textContent = 'Copied';
+  btn.classList.add('done');
+  clearTimeout(btn._t);
+  btn._t = setTimeout(function () {
+    btn.textContent = 'Copy';
+    btn.classList.remove('done');
+  }, 1600);
+}
+
+function handleCopy(btn, block) {
+  var clone = block.cloneNode(true);
+  clone.querySelectorAll('.pr').forEach(function (p) { p.remove(); });
+  var text = clone.textContent.replace(/^\n+/, '').replace(/\s+$/, '');
+
+  if (copySync(text)) {
+    markCopied(btn);
+    return;
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(function () {
+      markCopied(btn);
+    }).catch(function () { /* nothing left to try */ });
+  }
+}
+
+document.querySelectorAll('.cmd').forEach(function (cmd) {
+  var btn = cmd.querySelector('.copy');
+  var block = cmd.querySelector('code');
+  if (!btn || !block) return;
+
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    handleCopy(btn, block);
+  });
+
+  // The whole command block is clickable too.
+  cmd.style.cursor = 'pointer';
+  cmd.addEventListener('click', function () {
+    if (window.getSelection().toString()) return; // let manual selection work
+    handleCopy(btn, block);
+  });
+});
+
+// Highlight the section you're reading in the sidebar.
+var links = {};
+document.querySelectorAll('nav.side a').forEach(function (a) {
+  links[a.getAttribute('href').slice(1)] = a;
+});
+var observer = new IntersectionObserver(function (entries) {
+  entries.forEach(function (e) {
+    var link = links[e.target.id];
+    if (!link) return;
+    if (e.isIntersecting) {
+      Object.keys(links).forEach(function (k) { links[k].classList.remove('on'); });
+      link.classList.add('on');
+    }
+  });
+}, { rootMargin: '-10% 0px -70% 0px', threshold: 0 });
+document.querySelectorAll('section').forEach(function (s) { observer.observe(s); });
+</script>
+
+</body>
+</html>
