@@ -2,6 +2,9 @@
 
 A simple step-by-step guide to install Docker and set up a Frappe site on your Ubuntu laptop.
 
+**Author:** Anshu Yadav — Frappe Developer
+**GitHub:** [github.com/Anshuyadav02](https://github.com/Anshuyadav02)
+
 ---
 
 ## 🗺️ Roadmap
@@ -14,9 +17,10 @@ A simple step-by-step guide to install Docker and set up a Frappe site on your U
 | 4 | Clone frappe_docker | Project files + dev config |
 | 5 | Setup bench | Frappe framework installed |
 | 6 | Connect containers | DB + Redis linked |
-| 7 | Create site | Your website is live |
-| 8 | Create app | Your custom app |
-| 9 | Install app | App added to site |
+| 7 | Install bench requirements | Dependencies installed |
+| 8 | Create site | Your website is live |
+| 9 | Create app | Your custom app |
+| 10 | Install app | App added to site |
 
 ---
 
@@ -134,17 +138,8 @@ By default bench looks for the database and Redis on `localhost`. But here they 
 
 ```bash
 bench set-config -g db_host mariadb
-```
-
-```bash
 bench set-config -g redis_cache redis://redis-cache:6379
-```
-
-```bash
 bench set-config -g redis_queue redis://redis-queue:6379
-```
-
-```bash
 bench set-config -g redis_socketio redis://redis-queue:6379
 ```
 
@@ -161,7 +156,21 @@ bench set-config -g redis_socketio redis://redis-queue:6379
 
 ---
 
-## 7️⃣ Create a New Site
+## 7️⃣ Install Bench Requirements
+
+Pull in the Python and Node dependencies that your apps need.
+
+```bash
+bench setup requirements
+```
+
+> 💡 **What's happening:** This reads every app's requirement files and installs the missing Python packages and Node modules into the bench.
+>
+> ✅ Run this again any time you add a new app or pull new code, so the dependencies stay in sync.
+
+---
+
+## 8️⃣ Create a New Site
 
 ```bash
 bench new-site site_name.localhost
@@ -175,7 +184,7 @@ bench new-site site_name.localhost
 
 ---
 
-## 8️⃣ Create a New App
+## 9️⃣ Create a New App
 
 ```bash
 bench new-app ap_name
@@ -189,13 +198,13 @@ bench new-app ap_name
 
 ---
 
-## 9️⃣ Install the App on Your Site
+## 🔟 Install the App on Your Site
 
 ```bash
 bench --site site_name install-app appname
 ```
 
-> 💡 **What's happening:** Here `site_name` is the site you created in Step 7, and `appname` is the app you created in Step 8.
+> 💡 **What's happening:** Here `site_name` is the site you created in Step 8, and `appname` is the app you created in Step 9.
 >
 > 🎉 Done! Your Frappe site and custom app are ready.
 
@@ -233,13 +242,16 @@ bench set-config -g redis_cache redis://redis-cache:6379
 bench set-config -g redis_queue redis://redis-queue:6379
 bench set-config -g redis_socketio redis://redis-queue:6379
 
-# 7. Create site
+# 7. Install bench requirements
+bench setup requirements
+
+# 8. Create site
 bench new-site site_name.localhost
 
-# 8. Create app
+# 9. Create app
 bench new-app ap_name
 
-# 9. Install app
+# 10. Install app
 bench --site site_name install-app appname
 ```
 
@@ -253,6 +265,23 @@ bench --site site_name install-app appname
 - [ ] Repo cloned + `.devcontainer` copied
 - [ ] Bench initialized
 - [ ] All 4 `set-config` commands run
+- [ ] Bench requirements installed
 - [ ] Site created
 - [ ] App created
 - [ ] App installed on site
+
+---
+
+## 👤 About the Author
+
+**Anshu Yadav**
+Frappe Developer
+[github.com/Anshuyadav02](https://github.com/Anshuyadav02)
+
+---
+
+## 🔗 Reference Links
+
+- [Frappe Docker repo](https://github.com/frappe/frappe_docker)
+- [Frappe Framework docs](https://docs.frappe.io/framework)
+- [Frappe community forum](https://discuss.frappe.io)
